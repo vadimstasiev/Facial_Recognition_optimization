@@ -39,11 +39,11 @@ def get_parsed_dataset():
     return (images, labels)
 
 
-def create_model(POSSIBLE_OUTPUT, num_neurons):
+def create_model(POSSIBLE_OUTPUT):
     model = keras.Sequential([
         keras.layers.Flatten(input_shape=(
             IM1.shape[0], IM1.shape[1])),  # width and height
-        keras.layers.Dense(num_neurons, activation='relu'),
+        keras.layers.Dense(110, activation='relu'),
         keras.layers.Dense(POSSIBLE_OUTPUT)  # (30) Possible Output Options
     ])
     model.compile(optimizer='adam',
@@ -53,10 +53,10 @@ def create_model(POSSIBLE_OUTPUT, num_neurons):
     return model
 
 
-def train_model(model, train_data, train_labels, epochs):
+def train_model(model, train_data, train_labels):
     model.fit(x=np.array(train_data),
               y=np.array(train_labels),
-              epochs=epochs)
+              epochs=20)
     return model
 
 
@@ -97,38 +97,23 @@ if __name__ == "__main__":
     # X represents the dataset_images and Y represents the dataset_labels
     X_train, X_test, Y_train, Y_test = train_test_split(
         dataset_images, dataset_labels, test_size=0.3, random_state=42)
-    POSSIBLE_OUTPUT = len(set(dataset_labels))
-
-    NUM_OF_RUNS = 2  # Number of times to test each value
-
-    for epoch_num in range(1, 21):
-        f = open("output_epoch" + str(epoch_num) + ".csv", "a")
-        for num_neurons in range(1, 201):
-            total = 0
-            for i in range(0, NUM_OF_RUNS):
-                model = train_model(create_model(
-                    POSSIBLE_OUTPUT, num_neurons), X_train, Y_train, epoch_num)
-                test_loss, test_acc = model.evaluate(
-                    np.array(X_test),  np.array(Y_test), verbose=2)
-                print('\nTest accuracy:', test_acc)
-                total += test_acc
-            average = total/NUM_OF_RUNS
-            print(num_neurons, average)
-            f.write(str(num_neurons) + "," + str(average) + "\n")
-        f.close()
-
-    # probability_model = tf.keras.Sequential([model,
-    #                                          tf.keras.layers.Softmax()])
-    # predictions = probability_model.predict(np.array(X_train))
-    # num_rows = 5
-    # num_cols = 2
-    # num_images = num_rows*num_cols
-    # plt.rcParams.update({'font.size': 7})
-    # plt.figure(figsize=(12*num_cols, 2*num_rows))
-    # for i in range(num_images):
-    #     plt.subplot(num_rows, 2*num_cols, 2*i+1)
-    #     plot_image(i, predictions[i], Y_test, np.array(X_test))
-    #     plt.subplot(num_rows, 2*num_cols, 2*i+2)
-    #     plot_value_array(predictions[i])
-    # plt.tight_layout()
-    # plt.show()
+    POSSIBLE_OUTPUT = len(set(dataset_labels))  # 30
+    model = train_model(create_model(POSSIBLE_OUTPUT), X_train, Y_train)
+    test_loss, test_acc = model.evaluate(
+        np.array(X_test),  np.array(Y_test), verbose=2)
+    print('\nTest accuracy:', test_acc)
+    probability_model = tf.keras.Sequential([model,
+                                             tf.keras.layers.Softmax()])
+    predictions = probability_model.predict(np.array(X_train))
+    num_rows = 5
+    num_cols = 2
+    num_images = num_rows*num_cols
+    plt.rcParams.update({'font.size': 7})
+    plt.figure(figsize=(12*num_cols, 2*num_rows))
+    for i in range(num_images):
+        plt.subplot(num_rows, 2*num_cols, 2*i+1)
+        plot_image(i, predictions[i], Y_test, np.array(X_test))
+        plt.subplot(num_rows, 2*num_cols, 2*i+2)
+        plot_value_array(predictions[i])
+    plt.tight_layout()
+    plt.show()

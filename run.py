@@ -21,18 +21,19 @@ IM1 = image.imread(PATH + DNAME + '/' + FILES[0])
 N_PIXELS = IM1.shape[0]*IM1.shape[1]
 
 # HYPER PARAMETERS
-HP_EPOCHS = hp.HParam('epochs', hp.IntInterval([12, 30]))
-HP_NEURONS = hp.HParam('num_units', hp.IntInterval([50, 240]))
+HP_EPOCHS = hp.HParam('epochs', hp.Discrete([12, 30]))
+HP_NEURONS = hp.HParam('num_units', hp.Discrete([50, 240]))
 HP_DROPOUT = hp.HParam('dropout', hp.RealInterval(0.1, 0.2))
 HP_OPTIMIZER = hp.HParam('optimizer', hp.Discrete(['adam', 'sgd', 'nadam']))
 
 METRIC_ACCURACY = 'accuracy'
 
 with tf.summary.create_file_writer('logs/hparam_tuning').as_default():
-  hp.hparams_config(
-    hparams=[HP_EPOCHS, HP_NEURONS, HP_DROPOUT, HP_OPTIMIZER],
-    metrics=[hp.Metric(METRIC_ACCURACY, display_name='Accuracy')],
-  )
+    hp.hparams_config(
+        hparams=[HP_EPOCHS, HP_NEURONS, HP_DROPOUT, HP_OPTIMIZER],
+        metrics=[hp.Metric(METRIC_ACCURACY, display_name='Accuracy')],
+    )
+
 
 def get_parsed_dataset():
     images = []
@@ -72,11 +73,11 @@ def train_model(model, train_data, train_labels, hparams):
     model.fit(x=np.array(train_data),
               y=np.array(train_labels),
               epochs=hparams[HP_EPOCHS],
-              callbacks=[
-                tf.keras.callbacks.TensorBoard(logdir),  # log metrics
-                hp.KerasCallback(logdir, hparams),  # log hparams
-              ]
-    )
+              #           callbacks=[
+              #     tf.keras.callbacks.TensorBoard(logdir),  # log metrics
+              #     hp.KerasCallback(logdir, hparams),  # log hparams
+              # ]
+              )
     return model
 
 
@@ -109,6 +110,16 @@ def plot_value_array(predictions_array):
     thisplot[predicted_label].set_color('red')
 
 
+def run(run_dir, hparams):
+    with tf.summary.create_file_writer(run_dir).as_default():
+        hp.hparams(hparams)  # record the values used in this trial
+        model = train_model(create_model(
+            POSSIBLE_OUTPUT, hparams), X_train, Y_train, hparams)
+        _, test_acc = model.evaluate(
+            np.array(X_test),  np.array(Y_test), verbose=2)
+        tf.summary.scalar(METRIC_ACCURACY, test_acc, step=1)
+
+
 if __name__ == "__main__":
     dataset_images, dataset_labels = get_parsed_dataset()
     dataset_images = np.array(dataset_images)
@@ -117,40 +128,21 @@ if __name__ == "__main__":
     X_train, X_test, Y_train, Y_test = train_test_split(
         dataset_images, dataset_labels, test_size=0.3, random_state=42)
     POSSIBLE_OUTPUT = len(set(dataset_labels))  # 30
-    model = train_model(create_model(POSSIBLE_OUTPUT, hparams), X_train, Y_train, hparams)
-    test_loss, test_acc = model.evaluate(
-        np.array(X_test),  np.array(Y_test), verbose=2)
-    print('\nTest accuracy:', test_acc)
-    probability_model = tf.keras.Sequential([model,
-                                             tf.keras.layers.Softmax()])
-    predictions = probability_model.predict(np.array(X_train))
-    num_rows = 5
-    num_cols = 2
-    num_images = num_rows*num_cols
-    plt.rcParams.update({'font.size': 7})
-    plt.figure(figsize=(12*num_cols, 2*num_rows))
-    for i in range(num_images):
-        plt.subplot(num_rows, 2*num_cols, 2*i+1)
-        plot_image(i, predictions[i], Y_test, np.array(X_test))
-        plt.subplot(num_rows, 2*num_cols, 2*i+2)
-        plot_value_array(predictions[i])
-    plt.tight_layout()
-    plt.show()
 
+    session_num = 0
 
-    ######################################
-    # session_num = 0
-
-    # for num_units in HP_NUM_UNITS.domain.values:
-    # for dropout_rate in (HP_DROPOUT.domain.min_value, HP_DROPOUT.domain.max_value):
-    #     for optimizer in HP_OPTIMIZER.domain.values:
-    #     hparams = {
-    #         HP_NUM_UNITS: num_units,
-    #         HP_DROPOUT: dropout_rate,
-    #         HP_OPTIMIZER: optimizer,
-    #     }
-    #     run_name = "run-%d" % session_num
-    #     print('--- Starting trial: %s' % run_name)
-    #     print({h.name: hparams[h] for h in hparams})
-    #     run('logs/hparam_tuning/' + run_name, hparams)
-    #     session_num += 1
+    for num_epochs in HP_EPOCHS.domain.values:
+        for num_neurons in HP_NEURONS.domain.values:
+            for dropout_rate in (HP_DROPOUT.domain.min_value, HP_DROPOUT.domain.max_value):
+                for optimizer in HP_OPTIMIZER.domain.values:
+                    hparams = {
+                        HP_EPOCHS: num_epochs,
+                        HP_NEURONS: num_neurons,
+                        HP_DROPOUT: dropout_rate,
+                        HP_OPTIMIZER: optimizer,
+                    }
+                    run_name = "run-%d" % session_num
+                    print('--- Starting trial: %s' % run_name)
+                    print({h.name: hparams[h] for h in hparams})
+                    run('logs/hparam_tuning/' + run_name, hparams)
+                    session_num += 1

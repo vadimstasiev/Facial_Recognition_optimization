@@ -1,3 +1,4 @@
+import decimal
 import sys
 from os import listdir
 from matplotlib import image
@@ -23,7 +24,7 @@ N_PIXELS = IM1.shape[0]*IM1.shape[1]
 # HYPER PARAMETERS
 HP_EPOCHS = hp.HParam('epochs', hp.IntInterval(12, 40))
 HP_NEURONS = hp.HParam('num_units', hp.IntInterval(50, 240))
-HP_DROPOUT = hp.HParam('dropout', hp.Discrete([0.1, 0.2]))
+HP_DROPOUT = hp.HParam('dropout', hp.RealInterval(0.1, 0.2))
 HP_OPTIMIZER = hp.HParam('optimizer', hp.Discrete(['adam', 'sgd', 'nadam']))
 
 METRIC_ACCURACY = 'accuracy'
@@ -106,6 +107,16 @@ def plot_value_array(predictions_array):
     thisplot[predicted_label].set_color('red')
 
 
+def generate_random_hyperparams(hp_min, hp_max, hp_interval):
+    '''uniform generation of random hyper parameter'''
+    random_generated_hp = round(np.random.uniform(
+        hp_min, hp_max)/hp_interval) * hp_interval
+    # Making sure to get rid of occasional output of e.g.: 5.000001
+    random_generated_hp = round(random_generated_hp, abs(
+        decimal.Decimal(str(hp_interval)).as_tuple().exponent))
+    return random_generated_hp
+
+
 def run(run_dir, hparams):
     with tf.summary.create_file_writer(run_dir).as_default():
         hp.hparams(hparams)  # record the values used in this trial
@@ -127,18 +138,16 @@ if __name__ == "__main__":
 
     session_num = 0
 
-    for num_epochs in range(HP_EPOCHS.domain.min_value, HP_EPOCHS.domain.max_value):
-        for num_neurons in range(HP_NEURONS.domain.min_value, HP_NEURONS.domain.max_value):
-            for dropout_rate in HP_DROPOUT.domain.values:
-                for optimizer in HP_OPTIMIZER.domain.values:
-                    hparams = {
-                        HP_EPOCHS: num_epochs,
-                        HP_NEURONS: num_neurons,
-                        HP_DROPOUT: dropout_rate,
-                        HP_OPTIMIZER: optimizer,
-                    }
-                    run_name = "run-%d" % session_num
-                    print('--- Starting trial: %s' % run_name)
-                    print({h.name: hparams[h] for h in hparams})
-                    run('logs/hparam_tuning/' + run_name, hparams)
-                    session_num += 1
+    for i in range(10):  # random search hyper-parameter space times
+        hparams = {
+            HP_EPOCHS: generate_random_hyperparams(HP_EPOCHS.domain.min_value, HP_EPOCHS.domain.max_value, 1),
+            HP_NEURONS: generate_random_hyperparams(HP_NEURONS.domain.min_value, HP_NEURONS.domain.max_value, 1),
+            HP_DROPOUT: generate_random_hyperparams(HP_DROPOUT.domain.min_value, HP_DROPOUT.domain.max_value, 0.01),
+            HP_OPTIMIZER: HP_OPTIMIZER.domain.values[generate_random_hyperparams(
+                0, len(HP_OPTIMIZER.domain.values)-1, 1)]
+        }
+        run_name = "run-%d" % session_num
+        print('--- Starting trial: %s' % run_name)
+        print({h.name: hparams[h] for h in hparams})
+        run('logs/hparam_tuning/' + run_name, hparams)
+        session_num += 1

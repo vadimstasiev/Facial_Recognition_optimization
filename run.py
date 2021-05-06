@@ -21,9 +21,9 @@ IM1 = image.imread(PATH + DNAME + '/' + FILES[0])
 N_PIXELS = IM1.shape[0]*IM1.shape[1]
 
 # HYPER PARAMETERS
-HP_EPOCHS = hp.HParam('epochs', hp.Discrete([12, 30]))
-HP_NEURONS = hp.HParam('num_units', hp.Discrete([50, 240]))
-HP_DROPOUT = hp.HParam('dropout', hp.RealInterval(0.1, 0.2))
+HP_EPOCHS = hp.HParam('epochs', hp.IntInterval(12, 40))
+HP_NEURONS = hp.HParam('num_units', hp.IntInterval(50, 240))
+HP_DROPOUT = hp.HParam('dropout', hp.Discrete([0.1, 0.2]))
 HP_OPTIMIZER = hp.HParam('optimizer', hp.Discrete(['adam', 'sgd', 'nadam']))
 
 METRIC_ACCURACY = 'accuracy'
@@ -73,10 +73,6 @@ def train_model(model, train_data, train_labels, hparams):
     model.fit(x=np.array(train_data),
               y=np.array(train_labels),
               epochs=hparams[HP_EPOCHS],
-              #           callbacks=[
-              #     tf.keras.callbacks.TensorBoard(logdir),  # log metrics
-              #     hp.KerasCallback(logdir, hparams),  # log hparams
-              # ]
               )
     return model
 
@@ -131,9 +127,9 @@ if __name__ == "__main__":
 
     session_num = 0
 
-    for num_epochs in HP_EPOCHS.domain.values:
-        for num_neurons in HP_NEURONS.domain.values:
-            for dropout_rate in (HP_DROPOUT.domain.min_value, HP_DROPOUT.domain.max_value):
+    for num_epochs in range(HP_EPOCHS.domain.min_value, HP_EPOCHS.domain.max_value):
+        for num_neurons in range(HP_NEURONS.domain.min_value, HP_NEURONS.domain.max_value):
+            for dropout_rate in HP_DROPOUT.domain.values:
                 for optimizer in HP_OPTIMIZER.domain.values:
                     hparams = {
                         HP_EPOCHS: num_epochs,

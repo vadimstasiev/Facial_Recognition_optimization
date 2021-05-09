@@ -138,7 +138,7 @@ if __name__ == "__main__":
 
     session_num = 0
 
-    for i in range(10000):  # random search hyper-parameter space times
+    for i in range(10000):  # random search hyper-parameter space 10000 times
         hparams = {
             HP_EPOCHS: generate_random_hyperparams(HP_EPOCHS.domain.min_value, HP_EPOCHS.domain.max_value, 1),
             HP_NEURONS: generate_random_hyperparams(HP_NEURONS.domain.min_value, HP_NEURONS.domain.max_value, 1),

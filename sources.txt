@@ -1,2 +1,0 @@
-https://github.com/Terkea/facial_recognition_optimise
-https://www.tensorflow.org/tensorboard/hyperparameter_tuning_with_hparams

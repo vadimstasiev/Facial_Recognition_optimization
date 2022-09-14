@@ -14,20 +14,31 @@ This report addresses the objectives of the second assignment which serve as an 
 ## Designing a Solution
 
 As mentioned above, for this assignment it is required the use of at least one of the following suggested strategies:
+
 	Random Search
-    o	Random search is a technique through which random hyper parameter values are tested using a uniform random parameter generator, which ensures that random values are generated uniformly which ensures that different values are tested. (Bengio & Bergstra, 2011)
+
+ -	Random search is a technique through which random hyper parameter values are tested using a uniform random parameter generator, which ensures that random values are generated uniformly which ensures that different values are tested. (Bengio & Bergstra, 2011)
+    
 	Meta Learning
-    o	In this context, this is referring to the use of an existing model that was trained to optimize the hyper parameters of many different models to optimize the current model. (Hospedales, et al., 2020)
+
+ -	In this context, this is referring to the use of an existing model that was trained to optimize the hyper parameters of many different models to optimize the current model. (Hospedales, et al., 2020)
+    
 	Adaptive Boosting
-    o	Also known as “AdaBoost”, it is a machine learning technique that aims to fit models with repeatedly modified versions of the data where the data modifications are made to increase the chances of the model correctly classifying previously incorrect classifications. (sci-kit learn, 2020)
+
+ -	Also known as “AdaBoost”, it is a machine learning technique that aims to fit models with repeatedly modified versions of the data where the data modifications are made to increase the chances of the model correctly classifying previously incorrect classifications. (sci-kit learn, 2020)
+    
 	Cascade Correlation
-    o	This is a supervised learning algorithm that instead of using a fixed topology, it starts off with a minimal network and automatically trains and adds new hidden layers one by one. This allows the network to learn quickly as well as determine its own size and topology. (Fahlman & Lebiere, 1993)
+
+ -	This is a supervised learning algorithm that instead of using a fixed topology, it starts off with a minimal network and automatically trains and adds new hidden layers one by one. This allows the network to learn quickly as well as determine its own size and topology. (Fahlman & Lebiere, 1993)
 
 
 
 The original solution used an exhaustive search, also known as “grid search”, this was previously used to find the configuration with the best performing number of epochs and neurons, however, for this assignment, it was decided to also add a dropout layer and use its value as another hyper parameter as well as adding the ‘sgd’ and ‘nadam’ as alternative values for the optimizer, which would also be tested individually during the hyper parameter evaluation.
+
 To start with, it was decided to rewrite the grid search to also include the aforementioned added parameters, to recap on what that is and does, grid search is the process through which it is attempted every single combination of the different hyper parameters. It works iteratively through all of the different combinations, making this the ideal, yet unpractical, solution for finding the absolute best hyper parameter combination.
+
 This time around the implementation also revolved on using a tool provided by “TensorFlow” named “TensorBoard”. (TensorFlow, 2021) This tool provides a dashboard for viewing all the results of all of the different runs for easy and fast comparison, however the code had to also be adapted to generate compatible data that can actually be interpreted by this tool. 
+
 Bellow it is shown the reimplementation of the grid search to generate the mentioned compatible data for interpretation by “TensorBoard”.
 
 ![image](https://user-images.githubusercontent.com/17814261/190217906-70eb351a-c15e-40c4-b0f6-749047895b29.png)
